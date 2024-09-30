@@ -41,20 +41,28 @@
             margin: 5px 0;
             cursor: pointer;
             width: 100%;
+            border-radius: 5px; /* Squircle effect */
         }
 
         button:hover {
             background-color: #5b6eae;
         }
 
-        input[type="file"] {
+        input[type="file"], input[type="text"] {
             margin-top: 10px;
+            border-radius: 5px; /* Squircle effect */
+            padding: 10px;
+            border: none; /* Remove default border */
         }
 
         .script-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
+            background-color: #40444b; /* Background for script items */
+            padding: 10px;
+            margin-top: 5px;
+            border-radius: 5px; /* Squircle effect */
         }
     </style>
 </head>
@@ -65,12 +73,16 @@
             <div id="menuContent" class="hidden">
                 <button onclick="showLogin()">Log In</button>
                 <button onclick="showSignUp()">Sign Up</button>
+                <input type="text" id="username" placeholder="Enter your username" />
+                <input type="text" id="scriptName" placeholder="Enter script name" />
                 <input type="file" id="luaUpload" accept=".lua" onchange="uploadLua()">
                 <div id="uploadedScripts"></div>
             </div>
         </div>
         <div class="main-content">
             <h1>Welcome to Discord Clone</h1>
+            <h2>Uploaded Scripts:</h2>
+            <div id="publicScripts"></div> <!-- Display uploaded scripts here -->
         </div>
     </div>
 
@@ -93,9 +105,12 @@
 
         function uploadLua() {
             const fileInput = document.getElementById('luaUpload');
-            
-            if (fileInput.files.length > 0) {
-                const fileName = fileInput.files[0].name;
+            const scriptNameInput = document.getElementById('scriptName');
+            const usernameInput = document.getElementById('username');
+
+            if (fileInput.files.length > 0 && scriptNameInput.value.trim() !== "" && usernameInput.value.trim() !== "") {
+                const fileName = scriptNameInput.value.trim();
+                const username = usernameInput.value.trim();
 
                 // Create a new script item
                 const scriptItem = document.createElement('div');
@@ -108,6 +123,7 @@
                 // Create an Edit button
                 const editButton = document.createElement('button');
                 editButton.innerText = 'Edit Script';
+                
                 editButton.onclick = function() {
                     const isPatched = confirm("Mark this script as patched?");
                     if (isPatched) {
@@ -115,29 +131,52 @@
                     }
                 };
 
+                // Create a Delete button
+                const deleteButton = document.createElement('button');
+                deleteButton.innerText = 'Delete Script';
+                
+                deleteButton.onclick = function() {
+                    const confirmDelete = confirm("Are you sure you want to delete this script?");
+                    if (confirmDelete) {
+                        // Remove the script item from the array and the DOM
+                        const index = uploadedScriptsArray.findIndex(script => script.name === fileName && script.username === username);
+                        if (index !== -1) {
+                            uploadedScriptsArray.splice(index, 1); // Remove from array
+                            updatePublicView(); // Refresh the public view
+                        } else {
+                            alert("You are not authorized to delete this script.");
+                        }
+                    }
+                };
+
                 // Append elements to the script item
                 scriptItem.appendChild(nameDisplay);
                 scriptItem.appendChild(editButton);
+                scriptItem.appendChild(deleteButton);
 
-                // Append the script item to the uploaded scripts section
-                document.getElementById('uploadedScripts').appendChild(scriptItem);
+                // Append the script item to the public scripts section
+                document.getElementById('publicScripts').appendChild(scriptItem);
 
                 // Store in array for public access
-                uploadedScriptsArray.push({ name: fileName, isPatched: false });
+                uploadedScriptsArray.push({ name: fileName, isPatched: false, username });
 
-                // Clear the input
+                // Clear the inputs
                 fileInput.value = '';
-                
+                scriptNameInput.value = '';
+                usernameInput.value = '';
+
                 // Update public view
                 updatePublicView();
+            } else {
+                alert("Please enter your username, a script name, and choose a file.");
             }
         }
 
         function updatePublicView() {
-            const uploadedScriptsDiv = document.getElementById('uploadedScripts');
+            const publicScriptsDiv = document.getElementById('publicScripts');
             
             // Clear current displayed scripts
-            uploadedScriptsDiv.innerHTML = '';
+            publicScriptsDiv.innerHTML = '';
 
             // Display all scripts publicly
             uploadedScriptsArray.forEach(script => {
@@ -156,12 +195,31 @@
                     updatePublicView(); // Refresh the public view
                 };
 
+                const deleteButton = document.createElement('button');
+                deleteButton.innerText = 'Delete Script';
+                
+                deleteButton.onclick = function() {
+                    const confirmDelete = confirm("Are you sure you want to delete this script?");
+                    if (confirmDelete) {
+                        // Remove the script item from the array and the DOM
+                        const index = uploadedScriptsArray.findIndex(s => s.name === script.name && s.username === script.username);
+                        if (index !== -1) {
+                            uploadedScriptsArray.splice(index, 1); // Remove from array
+                            updatePublicView(); // Refresh the public view
+                        } else {
+                            alert("You are not authorized to delete this script.");
+                        }
+                    }
+                };
+
+                // Append elements to the script item
                 scriptItem.appendChild(nameDisplay);
                 scriptItem.appendChild(editButton);
+                scriptItem.appendChild(deleteButton);
                 
-                uploadedScriptsDiv.appendChild(scriptItem);
+                publicScriptsDiv.appendChild(scriptItem);
             });
         }
     </script>
 </body>
-                  </html>
+</html>
