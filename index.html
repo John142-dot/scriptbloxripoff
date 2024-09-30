@@ -98,8 +98,9 @@
 
     <script>
         let allScripts = []; // Store all fetched scripts for searching
+        let displayedScripts = []; // Store currently displayed scripts
         let currentIndex = 0; // Track the current index for showing more scripts
-        const scriptsToShow = 4; // Number of scripts to show each time
+        const scriptsToShow = 15; // Number of scripts to show each time
 
         async function fetchAllScripts() {
             let currentPage = 1;
@@ -181,6 +182,7 @@
 
                 scriptsContainer.appendChild(scriptItem);
                 currentIndex++;
+                displayedScripts.push(script); // Keep track of displayed scripts
             }
             
             updateShowMoreButton(); // Update Show More button visibility
