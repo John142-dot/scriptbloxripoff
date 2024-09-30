@@ -17,10 +17,11 @@
             text-align: center;
         }
 
-        select {
+        select, input {
             margin-bottom: 10px;
             padding: 10px;
             border-radius: 5px; /* Squircle effect */
+            width: calc(100% - 22px); /* Full width minus padding */
         }
 
         button {
@@ -68,17 +69,25 @@
     <button onclick="fetchScripts()">Fetch Latest Scripts</button>
     <button onclick="fetchTrendingScripts()">Fetch Trending Scripts</button>
 
+    <!-- Search Box and Button -->
+    <input type="text" id="searchBox" placeholder="Search scripts..." />
+    <button onclick="searchScripts()">Search</button>
+
     <div id="scripts-container"></div>
 
     <script>
+        let allScripts = []; // Store all fetched scripts for searching
+
         async function fetchScripts() {
             const url = 'https://rscripts.net/api/v2/scripts?page=1&orderBy=date&sort=desc';
             const response = await fetch(url);
+            
             if (response.ok) {
                 const data = await response.json();
                 console.log("Current Page:", data.info.currentPage);
                 console.log("Max Pages:", data.info.maxPages);
-                displayScripts(data.scripts);
+                allScripts = data.scripts; // Store scripts for searching
+                displayScripts(allScripts); // Display all fetched scripts
             } else {
                 alert('Failed to fetch latest scripts!');
                 console.error('Error fetching scripts:', response.statusText);
@@ -93,7 +102,8 @@
                 const data = await response.json();
                 if (data.success) {
                     console.log("Trending Scripts:", data.success);
-                    displayScripts(data.scripts);
+                    allScripts = data.scripts; // Store scripts for searching
+                    displayScripts(allScripts); // Display all fetched scripts
                 } else {
                     console.error("Error:", data.error);
                     alert('Failed to fetch trending scripts!');
@@ -135,6 +145,18 @@
 
                 scriptsContainer.appendChild(scriptItem);
             });
+        }
+
+        function searchScripts() {
+            const query = document.getElementById('searchBox').value.toLowerCase();
+            
+            // Filter the stored scripts based on the search query
+            const filteredScripts = allScripts.filter(script => 
+                script.title.toLowerCase().includes(query) || 
+                script.description.toLowerCase().includes(query)
+            );
+
+            displayScripts(filteredScripts); // Display filtered scripts
         }
     </script>
 </body>
