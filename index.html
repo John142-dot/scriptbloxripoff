@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Discord Style UI</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #2c2f33;
+            color: white;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            display: flex;
+        }
+
+        .sidebar {
+            width: 200px;
+            background-color: #23272a;
+            padding: 10px;
+            transition: width 0.3s ease;
+        }
+
+        .main-content {
+            flex-grow: 1;
+            padding: 20px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        button {
+            background-color: #7289da;
+            border: none;
+            color: white;
+            padding: 10px;
+            margin: 5px 0;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        button:hover {
+            background-color: #5b6eae;
+        }
+
+        input[type="file"] {
+            margin-top: 10px;
+        }
+
+        .script-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="sidebar" id="menu">
+            <button onclick="toggleMenu()">Menu</button>
+            <div id="menuContent" class="hidden">
+                <button onclick="showLogin()">Log In</button>
+                <button onclick="showSignUp()">Sign Up</button>
+                <input type="file" id="luaUpload" accept=".lua" onchange="uploadLua()">
+                <div id="uploadedScripts"></div>
+            </div>
+        </div>
+        <div class="main-content">
+            <h1>Welcome to Discord Clone</h1>
+        </div>
+    </div>
+
+    <script>
+        // Array to hold uploaded scripts
+        const uploadedScriptsArray = [];
+
+        function toggleMenu() {
+            const menu = document.getElementById('menuContent');
+            menu.classList.toggle('hidden');
+        }
+
+        function showLogin() {
+            alert("Log In functionality not implemented.");
+        }
+
+        function showSignUp() {
+            alert("Sign Up functionality not implemented.");
+        }
+
+        function uploadLua() {
+            const fileInput = document.getElementById('luaUpload');
+            
+            if (fileInput.files.length > 0) {
+                const fileName = fileInput.files[0].name;
+
+                // Create a new script item
+                const scriptItem = document.createElement('div');
+                scriptItem.classList.add('script-item');
+
+                // Create a name display
+                const nameDisplay = document.createElement('span');
+                nameDisplay.innerText = fileName;
+
+                // Create an Edit button
+                const editButton = document.createElement('button');
+                editButton.innerText = 'Edit Script';
+                editButton.onclick = function() {
+                    const isPatched = confirm("Mark this script as patched?");
+                    if (isPatched) {
+                        nameDisplay.innerText = `${fileName} (patched)`;
+                    }
+                };
+
+                // Append elements to the script item
+                scriptItem.appendChild(nameDisplay);
+                scriptItem.appendChild(editButton);
+
+                // Append the script item to the uploaded scripts section
+                document.getElementById('uploadedScripts').appendChild(scriptItem);
+
+                // Store in array for public access
+                uploadedScriptsArray.push({ name: fileName, isPatched: false });
+
+                // Clear the input
+                fileInput.value = '';
+                
+                // Update public view
+                updatePublicView();
+            }
+        }
+
+        function updatePublicView() {
+            const uploadedScriptsDiv = document.getElementById('uploadedScripts');
+            
+            // Clear current displayed scripts
+            uploadedScriptsDiv.innerHTML = '';
+
+            // Display all scripts publicly
+            uploadedScriptsArray.forEach(script => {
+                const scriptItem = document.createElement('div');
+                scriptItem.classList.add('script-item');
+
+                const nameDisplay = document.createElement('span');
+                nameDisplay.innerText = script.isPatched ? `${script.name} (patched)` : script.name;
+
+                const editButton = document.createElement('button');
+                editButton.innerText = 'Edit Script';
+                
+                editButton.onclick = function() {
+                    const isPatched = confirm("Mark this script as patched?");
+                    script.isPatched = isPatched; // Update the patched status
+                    updatePublicView(); // Refresh the public view
+                };
+
+                scriptItem.appendChild(nameDisplay);
+                scriptItem.appendChild(editButton);
+                
+                uploadedScriptsDiv.appendChild(scriptItem);
+            });
+        }
+    </script>
+</body>
+                  </html>
