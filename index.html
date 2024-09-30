@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rscripts pp</title>
+    <title>Rscripts App</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -65,9 +65,16 @@
     </style>
 </head>
 <body>
-    <h1>BloxSearch</h1>
+    <h1>Rscripts App</h1>
 
-    <input type="text" id="searchBox" placeholder="Search scripts..." />
+    <select id="scriptType" onchange="fetchScripts()">
+        <option value="latest">Latest Scripts</option>
+        <option value="trending">Trending Scripts</option>
+    </select>
+
+    <button onclick="fetchScripts()">Fetch Scripts</button>
+
+    <input type="text" id="searchBox" placeholder="Search scripts by exact title..." />
     <button onclick="searchScripts()">Search</button>
     
     <div id="scripts-container"></div>
@@ -79,7 +86,6 @@
 
     <script>
         let allScripts = []; // Store all fetched scripts for searching
-        let displayedScripts = []; // Store currently displayed scripts
         let currentIndex = 0; // Track the current index for showing more scripts
         const scriptsToShow = 4; // Number of scripts to show each time
 
@@ -108,10 +114,30 @@
             displayScripts();
         }
 
+        async function fetchTrendingScripts() {
+            const url = 'https://rscripts.net/api/v2/trending';
+            
+            const response = await fetch(url);
+            
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success) {
+                    allScripts = data.scripts; // Store trending scripts for searching
+                    currentIndex = 0; // Reset index for new fetch
+                    displayScripts(); // Display initial set of trending scripts
+                } else {
+                    console.error("Error:", data.error);
+                    alert('Failed to fetch trending scripts!');
+                }
+            } else {
+                alert('Failed to fetch trending scripts!');
+                console.error('Error fetching scripts:', response.statusText);
+            }
+        }
+
         function displayScripts() {
             const scriptsContainer = document.getElementById('scripts-container');
             
-            // Clear previous displayed items before showing new ones
             while (currentIndex < allScripts.length && currentIndex < displayedScripts.length + scriptsToShow) {
                 const scriptItem = document.createElement('div');
                 scriptItem.classList.add('script-item');
@@ -142,7 +168,6 @@
 
                 scriptsContainer.appendChild(scriptItem);
                 currentIndex++;
-                displayedScripts.push(script); // Keep track of displayed scripts
             }
             
             updateShowMoreButton(); // Update Show More button visibility
@@ -163,12 +188,10 @@
         }
 
         function searchScripts() {
-            const query = document.getElementById('searchBox').value.toLowerCase();
-            
-            // Filter the stored scripts based on the search query
+           const query = document.getElementById('searchBox').value.trim().toLowerCase();
+           
            displayedScripts = allScripts.filter(script => 
-               script.title.toLowerCase().includes(query) || 
-               script.description.toLowerCase().includes(query)
+               script.title.toLowerCase() === query // Exact match for title
            );
 
            currentIndex = 0; // Reset index for new search results
@@ -196,4 +219,4 @@
 
    </script>
 </body>
-</html>
+    </html>
