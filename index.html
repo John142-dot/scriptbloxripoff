@@ -101,14 +101,14 @@
                 scriptItem.classList.add('script-item');
                 scriptItem.innerHTML = `<h3>${script.title}</h3><p>${script.description}</p>`;
 
-                // Button to view the Lua script wrapped in loadstring
+                // Button to view the Lua script directly
                 const viewButton = document.createElement('button');
                 viewButton.innerText = 'View Script';
-                viewButton.onclick = () => viewRawScript(script.download); // Pass download key
+                viewButton.onclick = () => viewDirectScript(script.download); // Pass download key
 
                 // Button to view the raw Lua code
                 const viewRawButton = document.createElement('button');
-                viewRawButton.innerText = 'View Raw';
+                viewRawButton.innerText = 'View Raw (not work)';
                 viewRawButton.onclick = () => viewRawCode(script.download); // Pass download key
 
                 // Append buttons to the script item
@@ -118,7 +118,7 @@
             });
         }
 
-        async function viewRawScript(downloadKey) {
+        async function viewDirectScript(downloadKey) {
             const scriptUrl = `https://rscripts.net/raw/${downloadKey}`;
             
             const response = await fetch(scriptUrl);
@@ -139,16 +139,16 @@
                 // Clear previous content
                 commentSection.innerHTML = '';
 
-                // Display the raw Lua script wrapped in loadstring
-                const preLoadstring = document.createElement('pre');
-                preLoadstring.innerText = `loadstring([[\n${scriptContent}\n]])`; // Wrap in loadstring
+                // Display the raw Lua script directly
+                const preRawCode = document.createElement('pre');
+                preRawCode.innerText = `${scriptContent}`; // Show raw code directly
 
                 // Textarea for comments
                 const textarea = document.createElement('textarea');
                 textarea.placeholder = 'Add your comment here...';
 
                 // Append elements to the comment section
-                commentSection.appendChild(preLoadstring);
+                commentSection.appendChild(preRawCode);
                 commentSection.appendChild(textarea);
 
                 // Show the comment section
@@ -184,7 +184,7 @@
                 // Clear previous content
                 commentSection.innerHTML = '';
 
-                // Display the raw Lua script without loadstring
+                // Display the raw Lua script directly without loadstring
                 const preRawCode = document.createElement('pre');
                 preRawCode.innerText = `${scriptContent}`; // Show raw code directly
 
@@ -209,4 +209,4 @@
         }
     </script>
 </body>
-</html>
+        </html>
