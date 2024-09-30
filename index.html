@@ -62,6 +62,18 @@
             text-align: center;
             margin-top: 20px;
         }
+
+        .status-paid {
+            color: blue; /* Paid status */
+        }
+
+        .status-free {
+            color: green; /* Free status */
+        }
+
+        .status-keysystem {
+            color: red; /* Key System status */
+        }
     </style>
 </head>
 <body>
@@ -151,6 +163,7 @@
                     <p>Creator: ${script.user?.username || script.creator}</p>
                     <img src="${script.image}" alt="${script.title}">
                     <textarea id="script-${script._id}" placeholder="Script content will appear here..."></textarea>
+                    <p class="${getStatusClass(script.paymentStatus)}">${getStatusText(script.paymentStatus)}</p> <!-- Payment Status -->
                 `;
 
                 const downloadUrl = script.rawScript;
@@ -178,16 +191,42 @@
             }
         }
 
-        function updateShowMoreButton() {
-            if (currentIndex < allScripts.length) { 
-                document.getElementById('showMoreButton').style.display = 'block'; 
-            } else { 
-                document.getElementById('showMoreButton').style.display = 'none'; 
-                document.getElementById('noMoreMessage').style.display = 'block'; 
-            }
-        }
+        function getStatusClass(status) {
+          switch(status) {
+              case 'paid':
+                  return 'status-paid';
+              case 'free':
+                  return 'status-free';
+              case 'keysystem':
+                  return 'status-keysystem';
+              default:
+                  return '';
+          }
+      }
 
-        function searchScripts() {
+      function getStatusText(status) {
+          switch(status) {
+              case 'paid':
+                  return 'Paid';
+              case 'free':
+                  return 'Free';
+              case 'keysystem':
+                  return 'Key System';
+              default:
+                  return '';
+          }
+      }
+
+      function updateShowMoreButton() {
+          if (currentIndex < allScripts.length) { 
+              document.getElementById('showMoreButton').style.display = 'block'; 
+          } else { 
+              document.getElementById('showMoreButton').style.display = 'none'; 
+              document.getElementById('noMoreMessage').style.display = 'block'; 
+          }
+      }
+
+      function searchScripts() {
            const query = document.getElementById('searchBox').value.trim().toLowerCase();
            
            displayedScripts = allScripts.filter(script => 
@@ -219,4 +258,4 @@
 
    </script>
 </body>
-    </html>
+</html>
