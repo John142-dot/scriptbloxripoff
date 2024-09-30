@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ditch scriptblox we got the ripoff version!!!!!11!</title>
+    <title>Rscripts API Integration</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -73,7 +73,12 @@
 <body>
     <div class="container">
         <h1>Available Scripts</h1>
-        
+
+        <select id="scriptType" onchange="fetchScripts()">
+            <option value="latest">Latest Scripts</option>
+            <option value="trending">Trending Scripts</option>
+        </select>
+
         <button onclick="fetchScripts()">Fetch Scripts</button>
 
         <div class="script-list" id="scriptList"></div>
@@ -81,14 +86,31 @@
 
     <script>
         async function fetchScripts() {
-            const response = await fetch('https://rscripts.net/api/v2/scripts?page=1&orderBy=date&sort=desc');
+            const scriptType = document.getElementById('scriptType').value;
+            let url;
 
-            if (response.ok) {
-                const data = await response.json();
-                displayScripts(data.scripts);
-            } else {
-                alert('Failed to fetch scripts!');
-                console.error('Error fetching scripts:', response.statusText);
+            if (scriptType === 'trending') {
+                url = 'https://rscripts.net/api/v2/trending';
+                const response = await fetch(url);
+                if (response.ok) {
+                    const data = await response.json();
+                    displayScripts(data.scripts);
+                } else {
+                    alert('Failed to fetch trending scripts!');
+                    console.error('Error fetching scripts:', response.statusText);
+                }
+                return; // Exit the function after fetching trending scripts
+            } else { // Default to latest scripts
+                url = 'https://rscripts.net/api/v2/scripts?page=1&orderBy=date&sort=desc';
+                const response = await fetch(url);
+                if (response.ok) {
+                    const data = await response.json();
+                    displayScripts(data.scripts);
+                } else {
+                    alert('Failed to fetch latest scripts!');
+                    console.error('Error fetching scripts:', response.statusText);
+                }
+                return; // Exit the function after fetching latest scripts
             }
         }
 
@@ -108,7 +130,7 @@
 
                 // Button to view the raw Lua code
                 const viewRawButton = document.createElement('button');
-                viewRawButton.innerText = 'View Raw (no work cuz retard me)';
+                viewRawButton.innerText = 'View Raw';
                 viewRawButton.onclick = () => viewRawCode(script.download); // Pass download key
 
                 // Append buttons to the script item
