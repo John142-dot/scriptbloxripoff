@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rscripts API Integration</title>
+    <title>ditch scriptblox we got the ripoff version!!!!!11!</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -101,14 +101,14 @@
                 scriptItem.classList.add('script-item');
                 scriptItem.innerHTML = `<h3>${script.title}</h3><p>${script.description}</p>`;
 
-                // Button to view the Lua script directly
+                // Button to copy the Lua script in loadstring format
                 const viewButton = document.createElement('button');
                 viewButton.innerText = 'View Script';
-                viewButton.onclick = () => viewDirectScript(script.download); // Pass download key
+                viewButton.onclick = () => copyScript(script.download); // Pass download key
 
                 // Button to view the raw Lua code
                 const viewRawButton = document.createElement('button');
-                viewRawButton.innerText = 'View Raw (not work)';
+                viewRawButton.innerText = 'View Raw (no work cuz retard me)';
                 viewRawButton.onclick = () => viewRawCode(script.download); // Pass download key
 
                 // Append buttons to the script item
@@ -118,7 +118,22 @@
             });
         }
 
-        async function viewDirectScript(downloadKey) {
+        async function copyScript(downloadKey) {
+            const scriptUrl = `https://rscripts.net/raw/${downloadKey}`;
+            
+            // Create the loadstring format
+            const loadstringFormat = `loadstring(game:HttpGet("${scriptUrl}"))()`;
+
+            // Copy to clipboard
+            navigator.clipboard.writeText(loadstringFormat).then(() => {
+                alert(`Copied to clipboard:\n${loadstringFormat}`);
+            }).catch(err => {
+                console.error('Could not copy text:', err);
+                alert('Failed to copy!');
+            });
+        }
+
+        async function viewRawCode(downloadKey) {
             const scriptUrl = `https://rscripts.net/raw/${downloadKey}`;
             
             const response = await fetch(scriptUrl);
@@ -162,51 +177,6 @@
                 console.error('Error retrieving script:', response.statusText);
             }
         }
-
-        async function viewRawCode(downloadKey) {
-            const scriptUrl = `https://rscripts.net/raw/${downloadKey}`;
-            
-            const response = await fetch(scriptUrl);
-            
-            if (response.ok) {
-                const scriptContent = await response.text();
-                
-                // Create or update the comment section
-                let commentSection = document.getElementById('commentSection');
-                
-                if (!commentSection) {
-                    commentSection = document.createElement('div');
-                    commentSection.id = 'commentSection';
-                    commentSection.className = 'comment-section';
-                    document.getElementById('scriptList').appendChild(commentSection);
-                }
-                
-                // Clear previous content
-                commentSection.innerHTML = '';
-
-                // Display the raw Lua script directly without loadstring
-                const preRawCode = document.createElement('pre');
-                preRawCode.innerText = `${scriptContent}`; // Show raw code directly
-
-                // Textarea for comments
-                const textarea = document.createElement('textarea');
-                textarea.placeholder = 'Add your comment here...';
-
-                // Append elements to the comment section
-                commentSection.appendChild(preRawCode);
-                commentSection.appendChild(textarea);
-
-                // Show the comment section
-                commentSection.style.display = 'block';
-                
-                // Scroll to the bottom of the page
-                window.scrollTo(0, document.body.scrollHeight);
-                
-            } else {
-                alert('Failed to retrieve raw script content!');
-                console.error('Error retrieving script:', response.statusText);
-            }
-        }
     </script>
 </body>
-        </html>
+</html>
