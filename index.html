@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rscripts API Integration</title>
+    <title>Rscripts App</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -13,11 +13,14 @@
             padding: 0;
         }
 
-        .container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 20px;
+        h1 {
+            text-align: center;
+        }
+
+        select {
+            margin-bottom: 10px;
+            padding: 10px;
+            border-radius: 5px; /* Squircle effect */
         }
 
         button {
@@ -25,7 +28,6 @@
             border: none;
             color: white;
             padding: 10px;
-            margin-top: 10px;
             cursor: pointer;
             width: 100%;
             border-radius: 5px; /* Squircle effect */
@@ -35,22 +37,15 @@
             background-color: #5b6eae;
         }
 
-        .script-list {
-            margin-top: 20px;
-            width: 100%;
+        #scripts-container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            padding: 10px;
         }
 
         .script-item {
             background-color: #40444b; /* Background for script items */
-            padding: 10px;
-            margin-top: 5px;
-            border-radius: 5px; /* Squircle effect */
-        }
-
-        .comment-section {
-            display: none; /* Hidden by default */
-            margin-top: 10px;
-            background-color: #3a3f43; /* Slightly lighter background */
             padding: 10px;
             border-radius: 5px; /* Squircle effect */
         }
@@ -61,28 +56,19 @@
             border-radius: 5px; /* Squircle effect */
             border: none; /* Remove default border */
         }
-
-        pre {
-            background-color: #3a3f43; /* Background for script content */
-            padding: 10px;
-            border-radius: 5px; /* Squircle effect */
-            white-space: pre-wrap; /* Preserve whitespace */
-        }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Available Scripts</h1>
+    <h1>Rscripts App</h1>
 
-        <select id="scriptType" onchange="fetchScripts()">
-            <option value="latest">Latest Scripts</option>
-            <option value="trending">Trending Scripts</option>
-        </select>
+    <select id="scriptType" onchange="fetchScripts()">
+        <option value="latest">Latest Scripts</option>
+        <option value="trending">Trending Scripts</option>
+    </select>
 
-        <button onclick="fetchScripts()">Fetch Scripts</button>
+    <button onclick="fetchScripts()">Fetch Scripts</button>
 
-        <div class="script-list" id="scriptList"></div>
-    </div>
+    <div id="scripts-container"></div>
 
     <script>
         async function fetchScripts() {
@@ -94,7 +80,12 @@
                 const response = await fetch(url);
                 if (response.ok) {
                     const data = await response.json();
-                    displayScripts(data.scripts);
+                    if (data.success) {
+                        displayScripts(data.scripts);
+                    } else {
+                        console.error("Error:", data.error);
+                        alert('Failed to fetch trending scripts!');
+                    }
                 } else {
                     alert('Failed to fetch trending scripts!');
                     console.error('Error fetching scripts:', response.statusText);
@@ -105,6 +96,8 @@
                 const response = await fetch(url);
                 if (response.ok) {
                     const data = await response.json();
+                    console.log("Current Page:", data.info.currentPage);
+                    console.log("Max Pages:", data.info.maxPages);
                     displayScripts(data.scripts);
                 } else {
                     alert('Failed to fetch latest scripts!');
@@ -115,89 +108,36 @@
         }
 
         function displayScripts(scripts) {
-            const scriptList = document.getElementById('scriptList');
-            scriptList.innerHTML = ''; // Clear previous scripts
+            const scriptsContainer = document.getElementById('scripts-container');
+            scriptsContainer.innerHTML = ''; // Clear previous scripts
 
             scripts.forEach(script => {
                 const scriptItem = document.createElement('div');
                 scriptItem.classList.add('script-item');
-                scriptItem.innerHTML = `<h3>${script.title}</h3><p>${script.description}</p>`;
+                scriptItem.innerHTML = `
+                    <h2>${script.title}</h2>
+                    <p>${script.description}</p>
+                    <img style="width: 40px; height: 40px; border-radius: 50%;" src="${script.user?.image || 'https://i.pravatar.cc/300'}" alt="Profile picture of ${script.user?.username || script.creator}">
+                    <p>Creator: ${script.user?.username || script.creator}</p>
+                    <img src="${script.image}" alt="${script.title}">
+                    <textarea id="script-${script._id}" placeholder="Script content will appear here..."></textarea>
+                `;
 
-                // Button to copy the Lua script in loadstring format
-                const viewButton = document.createElement('button');
-                viewButton.innerText = 'View Script';
-                viewButton.onclick = () => copyScript(script.download); // Pass download key
+                const downloadUrl = script.rawScript;
 
-                // Button to view the raw Lua code
-                const viewRawButton = document.createElement('button');
-                viewRawButton.innerText = 'View Raw';
-                viewRawButton.onclick = () => viewRawCode(script.download); // Pass download key
+                // Fetch and display the script content
+                fetch(downloadUrl)
+                    .then((response) => response.text())
+                    .then((scriptContent) => {
+                        const textArea = scriptItem.querySelector(`#script-${script._id}`);
+                        textArea.value = scriptContent;
+                    })
+                    .catch((error) => {
+                        console.error(`Error fetching script content for ${script.title}:`, error);
+                    });
 
-                // Append buttons to the script item
-                scriptItem.appendChild(viewButton);
-                scriptItem.appendChild(viewRawButton);
-                scriptList.appendChild(scriptItem);
+                scriptsContainer.appendChild(scriptItem);
             });
-        }
-
-        async function copyScript(downloadKey) {
-            const scriptUrl = `https://rscripts.net/raw/${downloadKey}`;
-            
-            // Create the loadstring format
-            const loadstringFormat = `loadstring(game:HttpGet("${scriptUrl}"))()`;
-
-            // Copy to clipboard
-            navigator.clipboard.writeText(loadstringFormat).then(() => {
-                alert(`Copied to clipboard:\n${loadstringFormat}`);
-            }).catch(err => {
-                console.error('Could not copy text:', err);
-                alert('Failed to copy!');
-            });
-        }
-
-        async function viewRawCode(downloadKey) {
-            const scriptUrl = `https://rscripts.net/raw/${downloadKey}`;
-            
-            const response = await fetch(scriptUrl);
-            
-            if (response.ok) {
-                const scriptContent = await response.text();
-                
-                // Create or update the comment section
-                let commentSection = document.getElementById('commentSection');
-                
-                if (!commentSection) {
-                    commentSection = document.createElement('div');
-                    commentSection.id = 'commentSection';
-                    commentSection.className = 'comment-section';
-                    document.getElementById('scriptList').appendChild(commentSection);
-                }
-                
-                // Clear previous content
-                commentSection.innerHTML = '';
-
-                // Display the raw Lua script directly
-                const preRawCode = document.createElement('pre');
-                preRawCode.innerText = `${scriptContent}`; // Show raw code directly
-
-                // Textarea for comments
-                const textarea = document.createElement('textarea');
-                textarea.placeholder = 'Add your comment here...';
-
-                // Append elements to the comment section
-                commentSection.appendChild(preRawCode);
-                commentSection.appendChild(textarea);
-
-                // Show the comment section
-                commentSection.style.display = 'block';
-                
-                // Scroll to the bottom of the page
-                window.scrollTo(0, document.body.scrollHeight);
-                
-            } else {
-                alert('Failed to retrieve raw script content!');
-                console.error('Error retrieving script:', response.statusText);
-            }
         }
     </script>
 </body>
