@@ -46,6 +46,28 @@
             margin-top: 5px;
             border-radius: 5px; /* Squircle effect */
         }
+
+        .comment-section {
+            display: none; /* Hidden by default */
+            margin-top: 10px;
+            background-color: #3a3f43; /* Slightly lighter background */
+            padding: 10px;
+            border-radius: 5px; /* Squircle effect */
+        }
+
+        textarea {
+            width: 100%;
+            height: 60px; /* Height for comment box */
+            border-radius: 5px; /* Squircle effect */
+            border: none; /* Remove default border */
+        }
+
+        pre {
+            background-color: #3a3f43; /* Background for script content */
+            padding: 10px;
+            border-radius: 5px; /* Squircle effect */
+            white-space: pre-wrap; /* Preserve whitespace */
+        }
     </style>
 </head>
 <body>
@@ -82,21 +104,49 @@
                 // Optional button to view the raw script
                 const viewButton = document.createElement('button');
                 viewButton.innerText = 'View Script';
-                viewButton.onclick = () => viewRawScript(script.download); // Use the download property
+                viewButton.onclick = () => viewRawScript(script.download, script.title); // Pass download key and title
 
                 scriptItem.appendChild(viewButton);
                 scriptList.appendChild(scriptItem);
             });
         }
 
-        async function viewRawScript(downloadKey) {
+        async function viewRawScript(downloadKey, title) {
             const scriptUrl = `https://rscripts.net/raw/${downloadKey}`;
             
             const response = await fetch(scriptUrl);
             
             if (response.ok) {
                 const scriptContent = await response.text();
-                alert(`Raw Script Content:\n${scriptContent}`); // Display raw content in an alert
+                
+                // Create a comment section
+                const commentSection = document.createElement('div');
+                commentSection.classList.add('comment-section');
+                
+                // Add title
+                const titleElement = document.createElement('h4');
+                titleElement.innerText = `Script Content for ${title}`;
+                
+                // Display the raw Lua script
+                const pre = document.createElement('pre');
+                pre.innerText = scriptContent;
+
+                // Textarea for comments
+                const textarea = document.createElement('textarea');
+                textarea.placeholder = 'Add your comment here...';
+
+                // Append elements to the comment section
+                commentSection.appendChild(titleElement);
+                commentSection.appendChild(pre);
+                commentSection.appendChild(textarea);
+
+                // Show the comment section
+                commentSection.style.display = 'block';
+
+                // Append to the script list
+                const scriptList = document.getElementById('scriptList');
+                scriptList.innerHTML = ''; // Clear previous scripts
+                scriptList.appendChild(commentSection); // Add new content
             } else {
                 alert('Failed to retrieve raw script content!');
                 console.error('Error retrieving script:', response.statusText);
