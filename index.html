@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Discord Style UI</title>
+    <title>Rscripts API Integration</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -15,22 +15,9 @@
 
         .container {
             display: flex;
-        }
-
-        .sidebar {
-            width: 200px;
-            background-color: #23272a;
-            padding: 10px;
-            transition: width 0.3s ease;
-        }
-
-        .main-content {
-            flex-grow: 1;
+            flex-direction: column;
+            align-items: center;
             padding: 20px;
-        }
-
-        .hidden {
-            display: none;
         }
 
         button {
@@ -38,7 +25,7 @@
             border: none;
             color: white;
             padding: 10px;
-            margin: 5px 0;
+            margin-top: 10px;
             cursor: pointer;
             width: 100%;
             border-radius: 5px; /* Squircle effect */
@@ -48,17 +35,12 @@
             background-color: #5b6eae;
         }
 
-        input[type="file"], input[type="text"] {
-            margin-top: 10px;
-            border-radius: 5px; /* Squircle effect */
-            padding: 10px;
-            border: none; /* Remove default border */
+        .script-list {
+            margin-top: 20px;
+            width: 100%;
         }
 
         .script-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
             background-color: #40444b; /* Background for script items */
             padding: 10px;
             margin-top: 5px;
@@ -68,157 +50,57 @@
 </head>
 <body>
     <div class="container">
-        <div class="sidebar" id="menu">
-            <button onclick="toggleMenu()">Menu</button>
-            <div id="menuContent" class="hidden">
-                <button onclick="showLogin()">Log In</button>
-                <button onclick="showSignUp()">Sign Up</button>
-                <input type="text" id="username" placeholder="Enter your username" />
-                <input type="text" id="scriptName" placeholder="Enter script name" />
-                <input type="file" id="luaUpload" accept=".lua" onchange="uploadLua()">
-                <div id="uploadedScripts"></div>
-            </div>
-        </div>
-        <div class="main-content">
-            <h1>Welcome to Discord Clone</h1>
-            <h2>Uploaded Scripts:</h2>
-            <div id="publicScripts"></div> <!-- Display uploaded scripts here -->
-        </div>
+        <h1>Available Scripts</h1>
+        
+        <button onclick="fetchScripts()">Fetch Scripts</button>
+
+        <div class="script-list" id="scriptList"></div>
     </div>
 
     <script>
-        // Array to hold uploaded scripts
-        const uploadedScriptsArray = [];
+        async function fetchScripts() {
+            const response = await fetch('https://rscripts.net/api/v2/scripts?page=1&orderBy=date&sort=desc');
 
-        function toggleMenu() {
-            const menu = document.getElementById('menuContent');
-            menu.classList.toggle('hidden');
-        }
-
-        function showLogin() {
-            alert("Log In functionality not implemented.");
-        }
-
-        function showSignUp() {
-            alert("Sign Up functionality not implemented.");
-        }
-
-        function uploadLua() {
-            const fileInput = document.getElementById('luaUpload');
-            const scriptNameInput = document.getElementById('scriptName');
-            const usernameInput = document.getElementById('username');
-
-            if (fileInput.files.length > 0 && scriptNameInput.value.trim() !== "" && usernameInput.value.trim() !== "") {
-                const fileName = scriptNameInput.value.trim();
-                const username = usernameInput.value.trim();
-
-                // Create a new script item
-                const scriptItem = document.createElement('div');
-                scriptItem.classList.add('script-item');
-
-                // Create a name display
-                const nameDisplay = document.createElement('span');
-                nameDisplay.innerText = fileName;
-
-                // Create an Edit button
-                const editButton = document.createElement('button');
-                editButton.innerText = 'Edit Script';
-                
-                editButton.onclick = function() {
-                    const isPatched = confirm("Mark this script as patched?");
-                    if (isPatched) {
-                        nameDisplay.innerText = `${fileName} (patched)`;
-                    }
-                };
-
-                // Create a Delete button
-                const deleteButton = document.createElement('button');
-                deleteButton.innerText = 'Delete Script';
-                
-                deleteButton.onclick = function() {
-                    const confirmDelete = confirm("Are you sure you want to delete this script?");
-                    if (confirmDelete) {
-                        // Remove the script item from the array and the DOM
-                        const index = uploadedScriptsArray.findIndex(script => script.name === fileName && script.username === username);
-                        if (index !== -1) {
-                            uploadedScriptsArray.splice(index, 1); // Remove from array
-                            updatePublicView(); // Refresh the public view
-                        } else {
-                            alert("You are not authorized to delete this script.");
-                        }
-                    }
-                };
-
-                // Append elements to the script item
-                scriptItem.appendChild(nameDisplay);
-                scriptItem.appendChild(editButton);
-                scriptItem.appendChild(deleteButton);
-
-                // Append the script item to the public scripts section
-                document.getElementById('publicScripts').appendChild(scriptItem);
-
-                // Store in array for public access
-                uploadedScriptsArray.push({ name: fileName, isPatched: false, username });
-
-                // Clear the inputs
-                fileInput.value = '';
-                scriptNameInput.value = '';
-                usernameInput.value = '';
-
-                // Update public view
-                updatePublicView();
+            if (response.ok) {
+                const data = await response.json();
+                displayScripts(data.scripts);
             } else {
-                alert("Please enter your username, a script name, and choose a file.");
+                alert('Failed to fetch scripts!');
+                console.error('Error fetching scripts:', response.statusText);
             }
         }
 
-        function updatePublicView() {
-            const publicScriptsDiv = document.getElementById('publicScripts');
-            
-            // Clear current displayed scripts
-            publicScriptsDiv.innerHTML = '';
+        function displayScripts(scripts) {
+            const scriptList = document.getElementById('scriptList');
+            scriptList.innerHTML = ''; // Clear previous scripts
 
-            // Display all scripts publicly
-            uploadedScriptsArray.forEach(script => {
+            scripts.forEach(script => {
                 const scriptItem = document.createElement('div');
                 scriptItem.classList.add('script-item');
+                scriptItem.innerHTML = `<h3>${script.title}</h3><p>${script.description}</p>`;
 
-                const nameDisplay = document.createElement('span');
-                nameDisplay.innerText = script.isPatched ? `${script.name} (patched)` : script.name;
+                // Optional button to view the raw script
+                const viewButton = document.createElement('button');
+                viewButton.innerText = 'View Script';
+                viewButton.onclick = () => viewRawScript(script.download); // Use the download property
 
-                const editButton = document.createElement('button');
-                editButton.innerText = 'Edit Script';
-                
-                editButton.onclick = function() {
-                    const isPatched = confirm("Mark this script as patched?");
-                    script.isPatched = isPatched; // Update the patched status
-                    updatePublicView(); // Refresh the public view
-                };
-
-                const deleteButton = document.createElement('button');
-                deleteButton.innerText = 'Delete Script';
-                
-                deleteButton.onclick = function() {
-                    const confirmDelete = confirm("Are you sure you want to delete this script?");
-                    if (confirmDelete) {
-                        // Remove the script item from the array and the DOM
-                        const index = uploadedScriptsArray.findIndex(s => s.name === script.name && s.username === script.username);
-                        if (index !== -1) {
-                            uploadedScriptsArray.splice(index, 1); // Remove from array
-                            updatePublicView(); // Refresh the public view
-                        } else {
-                            alert("You are not authorized to delete this script.");
-                        }
-                    }
-                };
-
-                // Append elements to the script item
-                scriptItem.appendChild(nameDisplay);
-                scriptItem.appendChild(editButton);
-                scriptItem.appendChild(deleteButton);
-                
-                publicScriptsDiv.appendChild(scriptItem);
+                scriptItem.appendChild(viewButton);
+                scriptList.appendChild(scriptItem);
             });
+        }
+
+        async function viewRawScript(downloadKey) {
+            const scriptUrl = `https://rscripts.net/raw/${downloadKey}`;
+            
+            const response = await fetch(scriptUrl);
+            
+            if (response.ok) {
+                const scriptContent = await response.text();
+                alert(`Raw Script Content:\n${scriptContent}`); // Display raw content in an alert
+            } else {
+                alert('Failed to retrieve raw script content!');
+                console.error('Error retrieving script:', response.statusText);
+            }
         }
     </script>
 </body>
