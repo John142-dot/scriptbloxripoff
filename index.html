@@ -63,47 +63,44 @@
 
     <select id="scriptType" onchange="fetchScripts()">
         <option value="latest">Latest Scripts</option>
-        <option value="trending">Trending Scripts</option>
     </select>
 
-    <button onclick="fetchScripts()">Fetch Scripts</button>
+    <button onclick="fetchScripts()">Fetch Latest Scripts</button>
+    <button onclick="fetchTrendingScripts()">Fetch Trending Scripts</button>
 
     <div id="scripts-container"></div>
 
     <script>
         async function fetchScripts() {
-            const scriptType = document.getElementById('scriptType').value;
-            let url;
+            const url = 'https://rscripts.net/api/v2/scripts?page=1&orderBy=date&sort=desc';
+            const response = await fetch(url);
+            if (response.ok) {
+                const data = await response.json();
+                console.log("Current Page:", data.info.currentPage);
+                console.log("Max Pages:", data.info.maxPages);
+                displayScripts(data.scripts);
+            } else {
+                alert('Failed to fetch latest scripts!');
+                console.error('Error fetching scripts:', response.statusText);
+            }
+        }
 
-            if (scriptType === 'trending') {
-                url = 'https://rscripts.net/api/v2/trending';
-                const response = await fetch(url);
-                if (response.ok) {
-                    const data = await response.json();
-                    if (data.success) {
-                        displayScripts(data.scripts);
-                    } else {
-                        console.error("Error:", data.error);
-                        alert('Failed to fetch trending scripts!');
-                    }
-                } else {
-                    alert('Failed to fetch trending scripts!');
-                    console.error('Error fetching scripts:', response.statusText);
-                }
-                return; // Exit the function after fetching trending scripts
-            } else { // Default to latest scripts
-                url = 'https://rscripts.net/api/v2/scripts?page=1&orderBy=date&sort=desc';
-                const response = await fetch(url);
-                if (response.ok) {
-                    const data = await response.json();
-                    console.log("Current Page:", data.info.currentPage);
-                    console.log("Max Pages:", data.info.maxPages);
+        async function fetchTrendingScripts() {
+            const url = 'https://rscripts.net/api/v2/trending';
+            const response = await fetch(url);
+            
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success) {
+                    console.log("Trending Scripts:", data.success);
                     displayScripts(data.scripts);
                 } else {
-                    alert('Failed to fetch latest scripts!');
-                    console.error('Error fetching scripts:', response.statusText);
+                    console.error("Error:", data.error);
+                    alert('Failed to fetch trending scripts!');
                 }
-                return; // Exit the function after fetching latest scripts
+            } else {
+                alert('Failed to fetch trending scripts!');
+                console.error('Error fetching scripts:', response.statusText);
             }
         }
 
