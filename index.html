@@ -101,17 +101,24 @@
                 scriptItem.classList.add('script-item');
                 scriptItem.innerHTML = `<h3>${script.title}</h3><p>${script.description}</p>`;
 
-                // Optional button to view the raw script
+                // Button to view the Lua script wrapped in loadstring
                 const viewButton = document.createElement('button');
                 viewButton.innerText = 'View Script';
-                viewButton.onclick = () => viewRawScript(script.download, script.title); // Pass download key and title
+                viewButton.onclick = () => viewRawScript(script.download); // Pass download key
 
+                // Button to view the raw Lua code
+                const viewRawButton = document.createElement('button');
+                viewRawButton.innerText = 'View Raw';
+                viewRawButton.onclick = () => viewRawCode(script.download); // Pass download key
+
+                // Append buttons to the script item
                 scriptItem.appendChild(viewButton);
+                scriptItem.appendChild(viewRawButton);
                 scriptList.appendChild(scriptItem);
             });
         }
 
-        async function viewRawScript(downloadKey, title) {
+        async function viewRawScript(downloadKey) {
             const scriptUrl = `https://rscripts.net/raw/${downloadKey}`;
             
             const response = await fetch(scriptUrl);
@@ -119,34 +126,82 @@
             if (response.ok) {
                 const scriptContent = await response.text();
                 
-                // Create a comment section
-                const commentSection = document.createElement('div');
-                commentSection.classList.add('comment-section');
+                // Create or update the comment section
+                let commentSection = document.getElementById('commentSection');
                 
-                // Add title
-                const titleElement = document.createElement('h4');
-                titleElement.innerText = `Script Content for ${title}`;
+                if (!commentSection) {
+                    commentSection = document.createElement('div');
+                    commentSection.id = 'commentSection';
+                    commentSection.className = 'comment-section';
+                    document.getElementById('scriptList').appendChild(commentSection);
+                }
                 
-                // Display the raw Lua script
-                const pre = document.createElement('pre');
-                pre.innerText = scriptContent;
+                // Clear previous content
+                commentSection.innerHTML = '';
+
+                // Display the raw Lua script wrapped in loadstring
+                const preLoadstring = document.createElement('pre');
+                preLoadstring.innerText = `loadstring([[\n${scriptContent}\n]])`; // Wrap in loadstring
 
                 // Textarea for comments
                 const textarea = document.createElement('textarea');
                 textarea.placeholder = 'Add your comment here...';
 
                 // Append elements to the comment section
-                commentSection.appendChild(titleElement);
-                commentSection.appendChild(pre);
+                commentSection.appendChild(preLoadstring);
                 commentSection.appendChild(textarea);
 
                 // Show the comment section
                 commentSection.style.display = 'block';
+                
+                // Scroll to the bottom of the page
+                window.scrollTo(0, document.body.scrollHeight);
+                
+            } else {
+                alert('Failed to retrieve raw script content!');
+                console.error('Error retrieving script:', response.statusText);
+            }
+        }
 
-                // Append to the script list
-                const scriptList = document.getElementById('scriptList');
-                scriptList.innerHTML = ''; // Clear previous scripts
-                scriptList.appendChild(commentSection); // Add new content
+        async function viewRawCode(downloadKey) {
+            const scriptUrl = `https://rscripts.net/raw/${downloadKey}`;
+            
+            const response = await fetch(scriptUrl);
+            
+            if (response.ok) {
+                const scriptContent = await response.text();
+                
+                // Create or update the comment section
+                let commentSection = document.getElementById('commentSection');
+                
+                if (!commentSection) {
+                    commentSection = document.createElement('div');
+                    commentSection.id = 'commentSection';
+                    commentSection.className = 'comment-section';
+                    document.getElementById('scriptList').appendChild(commentSection);
+                }
+                
+                // Clear previous content
+                commentSection.innerHTML = '';
+
+                // Display the raw Lua script without loadstring
+                const preRawCode = document.createElement('pre');
+                preRawCode.innerText = `${scriptContent}`; // Show raw code directly
+
+                // Textarea for comments
+                const textarea = document.createElement('textarea');
+                textarea.placeholder = 'Add your comment here...';
+
+                // Append elements to the comment section
+                commentSection.appendChild(preRawCode);
+                commentSection.appendChild(textarea);
+
+                // Show the comment section
+                commentSection.style.display = 'block';
+                
+                // Scroll to the bottom of the page
+                window.scrollTo(0, document.body.scrollHeight);
+                
             } else {
                 alert('Failed to retrieve raw script content!');
                 console.error('Error retrieving script:', response.statusText);
