@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rscripts App</title>
+    <title>Scriptblox App</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -62,22 +62,10 @@
             text-align: center;
             margin-top: 20px;
         }
-
-        .status-paid {
-            color: blue; /* Paid status */
-        }
-
-        .status-free {
-            color: green; /* Free status */
-        }
-
-        .status-keysystem {
-            color: red; /* Key System status */
-        }
     </style>
 </head>
 <body>
-    <h1>Rscripts App</h1>
+    <h1>Scriptblox App</h1>
 
     <select id="scriptType" onchange="fetchScripts()">
         <option value="latest">Latest Scripts</option>
@@ -101,13 +89,12 @@
         let currentIndex = 0; // Track the current index for showing more scripts
         const scriptsToShow = 15; // Number of scripts to show each time
         let displayedScripts = []; // Store currently displayed scripts
+        let currentPage = 1; // Track the current page for fetching more scripts
+        let maxPages = Infinity; // Initialize maxPages
 
         async function fetchAllScripts() {
-            let currentPage = 1;
-            let maxPages = 1;
-
             while (currentPage <= maxPages) {
-                const response = await fetch(`https://rscripts.net/api/v2/scripts?page=${currentPage}&orderBy=date&sort=desc`);
+                const response = await fetch(`https://scriptblox.com/api/v2/scripts?page=${currentPage}&orderBy=date&sort=desc`);
                 
                 if (response.ok) {
                     const data = await response.json();
@@ -123,27 +110,6 @@
 
             console.log("Total scripts fetched:", allScripts.length);
             displayScripts(); // Display the initial set of scripts after fetching all
-        }
-
-        async function fetchTrendingScripts() {
-            const url = 'https://rscripts.net/api/v2/trending';
-            
-            const response = await fetch(url);
-            
-            if (response.ok) {
-                const data = await response.json();
-                if (data.success) {
-                    allScripts = data.scripts; // Store trending scripts for searching
-                    currentIndex = 0; // Reset index for new fetch
-                    displayScripts(); // Display initial set of trending scripts
-                } else {
-                    console.error("Error:", data.error);
-                    alert('Failed to fetch trending scripts!');
-                }
-            } else {
-                alert('Failed to fetch trending scripts!');
-                console.error('Error fetching scripts:', response.statusText);
-            }
         }
 
         function displayScripts() {
@@ -162,7 +128,6 @@
                     <p>Creator: ${script.user?.username || script.creator}</p>
                     <img src="${script.image}" alt="${script.title}">
                     <textarea id="script-${script._id}" placeholder="Script content will appear here..." readonly></textarea>
-                    <p class="${getStatusClass(script.paymentStatus)}">${getStatusText(script.paymentStatus)}</p> <!-- Payment Status -->
                 `;
 
                 const downloadUrl = script.rawScript;
@@ -193,32 +158,6 @@
             }
         }
 
-        function getStatusClass(status) {
-            switch(status) {
-                case 'paid':
-                    return 'status-paid';
-                case 'free':
-                    return 'status-free';
-                case 'keysystem':
-                    return 'status-keysystem';
-                default:
-                    return '';
-            }
-        }
-
-        function getStatusText(status) {
-            switch(status) {
-                case 'paid':
-                    return 'Paid';
-                case 'free':
-                    return 'Free';
-                case 'keysystem':
-                    return 'Key System';
-                default:
-                    return '';
-            }
-        }
-
         function updateShowMoreButton() {
             if (currentIndex < allScripts.length) { 
                 document.getElementById('showMoreButton').style.display = 'block'; 
@@ -228,34 +167,15 @@
             }
         }
 
-        function searchScripts() {
-            const query = document.getElementById('searchBox').value.trim().toLowerCase();
-            displayedScripts = allScripts.filter(script => 
-                script.title.toLowerCase() === query // Exact match for title
-            );
-
-            currentIndex = 0; // Reset index for new search results
-
-            const scriptsContainer = document.getElementById('scripts-container');
-            scriptsContainer.innerHTML = ''; // Clear previous displayed items
-
-            displayScripts(); // Display filtered results after search
-            updateShowMoreButton(); // Update Show More button visibility after search
-
-            if (displayedScripts.length === 0) { 
-                document.getElementById('noMoreMessage').style.display = 'block'; 
-                document.getElementById('showMoreButton').style.display = 'none'; 
-            } else { 
-                document.getElementById('noMoreMessage').style.display = 'none'; 
+        function showMoreScripts() {
+            displayScripts(); // Load more scripts when clicked
+            
+            if (currentIndex >= allScripts.length && currentPage <= maxPages) { 
+                fetchAllScripts(); // Fetch more scripts if available
             }
         }
 
-        function showMoreScripts() {
-            displayScripts(); // Load more scripts when clicked
-        }
-
-        // Fetch all scripts when the page loads
-        window.onload = fetchAllScripts;
+        window.onload = fetchAllScripts; // Fetch all scripts when the page loads
 
     </script>
 </body>
