@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BloxSearch</title>
+    <title>Rscripts App</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -13,11 +13,15 @@
             padding: 0;
         }
 
-        .container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 20px;
+        h1 {
+            text-align: center;
+        }
+
+        select, input {
+            margin-bottom: 10px;
+            padding: 10px;
+            border-radius: 5px; /* Squircle effect */
+            width: calc(100% - 22px); /* Full width minus padding */
         }
 
         button {
@@ -25,7 +29,6 @@
             border: none;
             color: white;
             padding: 10px;
-            margin-top: 10px;
             cursor: pointer;
             width: 100%;
             border-radius: 5px; /* Squircle effect */
@@ -35,22 +38,15 @@
             background-color: #5b6eae;
         }
 
-        .script-list {
-            margin-top: 20px;
-            width: 100%;
+        #scripts-container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            padding: 10px;
         }
 
         .script-item {
             background-color: #40444b; /* Background for script items */
-            padding: 10px;
-            margin-top: 5px;
-            border-radius: 5px; /* Squircle effect */
-        }
-
-        .comment-section {
-            display: none; /* Hidden by default */
-            margin-top: 10px;
-            background-color: #3a3f43; /* Slightly lighter background */
             padding: 10px;
             border-radius: 5px; /* Squircle effect */
         }
@@ -62,121 +58,219 @@
             border: none; /* Remove default border */
         }
 
-        pre {
-            background-color: #3a3f43; /* Background for script content */
-            padding: 10px;
-            border-radius: 5px; /* Squircle effect */
-            white-space: pre-wrap; /* Preserve whitespace */
+        .no-more {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .status-paid {
+            color: blue; /* Paid status */
+        }
+
+        .status-free {
+            color: green; /* Free status */
+        }
+
+        .status-keysystem {
+            color: red; /* Key System status */
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Available Scripts using Rscripts API</h1>
-        
-        <button onclick="fetchScripts()">Fetch Scripts</button>
+    <h1>Rscripts App</h1>
 
-        <div class="script-list" id="scriptList"></div>
-    </div>
+    <select id="scriptType">
+        <option value="latest">Latest Scripts</option>
+        <option value="trending">Trending Scripts</option>
+    </select>
+
+    <button id="fetchScriptsButton">Fetch Scripts</button>
+
+    <input type="text" id="searchBox" placeholder="Search scripts by exact title..." />
+    <button id="searchButton">Search</button>
+    
+    <div id="scripts-container"></div>
+
+    <!-- Show More Button -->
+    <button id="showMoreButton" onclick="showMoreScripts()" style="display:none;">Show More</button>
+    
+    <div id="noMoreMessage" class="no-more" style="display:none;">Nothing else to see 🧐</div>
 
     <script>
-        async function fetchScripts() {
-            const response = await fetch('https://rscripts.net/api/v2/scripts?page=1&orderBy=date&sort=desc');
+        let allScripts = []; // Store all fetched scripts for searching
+        let currentIndex = 0; // Track the current index for showing more scripts
+        const scriptsToShow = 15; // Number of scripts to show each time
+        let displayedScripts = []; // Store currently displayed scripts
 
+        async function fetchAllScripts() {
+            let currentPage = 1;
+            let maxPages = 1;
+
+            while (currentPage <= maxPages) {
+                const response = await fetch(`https://rscripts.net/api/v2/scripts?page=${currentPage}&orderBy=date&sort=desc`);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    allScripts = allScripts.concat(data.scripts); // Append new scripts to the array
+                    maxPages = data.info.maxPages; // Update maxPages from the response
+                    console.log(`Fetched page ${currentPage}:`, data.scripts.length);
+                    currentPage++; // Move to the next page
+                } else {
+                    console.error("Error fetching scripts:", response.statusText);
+                    break; // Exit on error
+                }
+            }
+
+            console.log("Total scripts fetched:", allScripts.length);
+            displayScripts(); // Display the initial set of scripts after fetching all
+        }
+
+        async function fetchTrendingScripts() {
+            const url = 'https://rscripts.net/api/v2/trending';
+            
+            const response = await fetch(url);
+            
             if (response.ok) {
                 const data = await response.json();
-                displayScripts(data.scripts);
+                if (data.success) {
+                    allScripts = data.scripts; // Store trending scripts for searching
+                    currentIndex = 0; // Reset index for new fetch
+                    displayScripts(); // Display initial set of trending scripts
+                } else {
+                    console.error("Error:", data.error);
+                    alert('Failed to fetch trending scripts!');
+                }
             } else {
-                alert('Failed to fetch scripts!');
+                alert('Failed to fetch trending scripts!');
                 console.error('Error fetching scripts:', response.statusText);
             }
         }
 
-        function displayScripts(scripts) {
-            const scriptList = document.getElementById('scriptList');
-            scriptList.innerHTML = ''; // Clear previous scripts
-
-            scripts.forEach(script => {
+        function displayScripts() {
+            const scriptsContainer = document.getElementById('scripts-container');
+            
+            while (currentIndex < allScripts.length && currentIndex < displayedScripts.length + scriptsToShow) {
                 const scriptItem = document.createElement('div');
                 scriptItem.classList.add('script-item');
-                scriptItem.innerHTML = `<h3>${script.title}</h3><p>${script.description}</p>`;
+                
+                const script = allScripts[currentIndex];
+                
+                scriptItem.innerHTML = `
+                    <h2>${script.title}</h2>
+                    <p>${script.description}</p>
+                    <img style="width: 40px; height: 40px; border-radius: 50%;" src="${script.user?.image || 'https://i.pravatar.cc/300'}" alt="Profile picture of ${script.user?.username || script.creator}">
+                    <p>Creator: ${script.user?.username || script.creator}</p>
+                    <img src="${script.image}" alt="${script.title}">
+                    <textarea id="script-${script._id}" placeholder="Script content will appear here..." readonly></textarea>
+                    <p class="${getStatusClass(script.paymentStatus)}">${getStatusText(script.paymentStatus)}</p> <!-- Payment Status -->
+                `;
 
-                // Button to copy the Lua script in loadstring format
-                const viewButton = document.createElement('button');
-                viewButton.innerText = 'View Script';
-                viewButton.onclick = () => copyScript(script.download); // Pass download key
+                const downloadUrl = script.rawScript;
 
-                // Button to view the raw Lua code
-                const viewRawButton = document.createElement('button');
-                viewRawButton.innerText = 'View Raw';
-                viewRawButton.onclick = () => viewRawCode(script.download); // Pass download key
+                // Fetch and display the script content
+                fetch(downloadUrl)
+                    .then((response) => response.text())
+                    .then((scriptContent) => {
+                        const textArea = scriptItem.querySelector(`#script-${script._id}`);
+                        textArea.value = scriptContent; // Display the raw script content in the textarea
+                    })
+                    .catch((error) => {
+                        console.error(`Error fetching script content for ${script.title}:`, error);
+                        const textArea = scriptItem.querySelector(`#script-${script._id}`);
+                        textArea.value = "Error loading content"; // Show error message in textarea
+                    });
 
-                // Append buttons to the script item
-                scriptItem.appendChild(viewButton);
-                scriptItem.appendChild(viewRawButton);
-                scriptList.appendChild(scriptItem);
-            });
-        }
-
-        async function copyScript(downloadKey) {
-            const scriptUrl = `https://rscripts.net/raw/${downloadKey}`;
+                scriptsContainer.appendChild(scriptItem);
+                currentIndex++;
+                displayedScripts.push(script); // Keep track of displayed scripts
+            }
             
-            // Create the loadstring format
-            const loadstringFormat = `loadstring(game:HttpGet("${scriptUrl}"))()`;
-
-            // Copy to clipboard
-            navigator.clipboard.writeText(loadstringFormat).then(() => {
-                alert(`Copied to clipboard:\n${loadstringFormat}`);
-            }).catch(err => {
-                console.error('Could not copy text:', err);
-                alert('Failed to copy!');
-            });
-        }
-
-        async function viewRawCode(downloadKey) {
-            const scriptUrl = `https://rscripts.net/raw/${downloadKey}`;
+            updateShowMoreButton(); // Update Show More button visibility
             
-            const response = await fetch(scriptUrl);
-            
-            if (response.ok) {
-                const scriptContent = await response.text();
-                
-                // Create or update the comment section
-                let commentSection = document.getElementById('commentSection');
-                
-                if (!commentSection) {
-                    commentSection = document.createElement('div');
-                    commentSection.id = 'commentSection';
-                    commentSection.className = 'comment-section';
-                    document.getElementById('scriptList').appendChild(commentSection);
-                }
-                
-                // Clear previous content
-                commentSection.innerHTML = '';
-
-                // Display the raw Lua script directly
-                const preRawCode = document.createElement('pre');
-                preRawCode.innerText = `${scriptContent}`; // Show raw code directly
-
-                // Textarea for comments
-                const textarea = document.createElement('textarea');
-                textarea.placeholder = 'Add your comment here...';
-
-                // Append elements to the comment section
-                commentSection.appendChild(preRawCode);
-                commentSection.appendChild(textarea);
-
-                // Show the comment section
-                commentSection.style.display = 'block';
-                
-                // Scroll to the bottom of the page
-                window.scrollTo(0, document.body.scrollHeight);
-                
-            } else {
-                alert('Failed to retrieve raw script content!');
-                console.error('Error retrieving script:', response.statusText);
+            if (currentIndex >= allScripts.length) { 
+                document.getElementById('noMoreMessage').style.display = 'block'; // Show message if no more scripts
+                document.getElementById('showMoreButton').style.display = 'none'; // Hide Show More button if no more scripts
             }
         }
+
+        function getStatusClass(status) {
+            switch(status) {
+                case 'paid':
+                    return 'status-paid';
+                case 'free':
+                    return 'status-free';
+                case 'keysystem':
+                    return 'status-keysystem';
+                default:
+                    return '';
+            }
+        }
+
+        function getStatusText(status) {
+            switch(status) {
+                case 'paid':
+                    return 'Paid';
+                case 'free':
+                    return 'Free';
+                case 'keysystem':
+                    return 'Key System';
+                default:
+                    return '';
+            }
+        }
+
+        function updateShowMoreButton() {
+            if (currentIndex < allScripts.length) { 
+                document.getElementById('showMoreButton').style.display = 'block'; 
+            } else { 
+                document.getElementById('showMoreButton').style.display = 'none'; 
+                document.getElementById('noMoreMessage').style.display = 'block'; 
+            }
+        }
+
+        function searchScripts() {
+          const query = document.getElementById('searchBox').value.trim().toLowerCase();
+          displayedScripts = allScripts.filter(script => 
+              script.title.toLowerCase() === query // Exact match for title
+          );
+
+          currentIndex = 0; // Reset index for new search results
+
+          const scriptsContainer = document.getElementById('scripts-container');
+          scriptsContainer.innerHTML = ''; // Clear previous displayed items
+
+          displayScripts(); // Display filtered results after search
+          updateShowMoreButton(); // Update Show More button visibility after search
+
+          if (displayedScripts.length === 0) { 
+              document.getElementById('noMoreMessage').style.display = 'block'; 
+              document.getElementById('showMoreButton').style.display = 'none'; 
+          } else { 
+              document.getElementById('noMoreMessage').style.display = 'none'; 
+          }
+      }
+
+      function showMoreScripts() {
+          displayScripts(); // Load more scripts when clicked
+      }
+
+      function fetchScripts() {
+          const selectedType = document.getElementById("scriptType").value;
+
+          if (selectedType === "latest") {
+              fetchAllScripts();
+          } else if (selectedType === "trending") {
+              fetchTrendingScripts();
+          }
+      }
+
+      // Add event listeners to buttons
+      document.getElementById("fetchScriptsButton").addEventListener("click", fetchScripts);
+      document.getElementById("searchButton").addEventListener("click", searchScripts);
+
+      // Fetch all scripts when the page loads
+      window.onload = fetchAllScripts;
+
     </script>
 </body>
-</html>
+    </html>
