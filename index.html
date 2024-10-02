@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rscripts App</title>
+    <title>BloxSearch</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -62,22 +62,10 @@
             text-align: center;
             margin-top: 20px;
         }
-
-        .status-paid {
-            color: blue; /* Paid status */
-        }
-
-        .status-free {
-            color: green; /* Free status */
-        }
-
-        .status-keysystem {
-            color: red; /* Key System status */
-        }
     </style>
 </head>
 <body>
-    <h1>Rscripts App</h1>
+    <h1>Available Scripts using Rscripts API</h1>
 
     <select id="scriptType">
         <option value="latest">Latest Scripts</option>
@@ -100,7 +88,6 @@
         let allScripts = []; // Store all fetched scripts for searching
         let currentIndex = 0; // Track the current index for showing more scripts
         const scriptsToShow = 15; // Number of scripts to show each time
-        let displayedScripts = []; // Store currently displayed scripts
 
         async function fetchAllScripts() {
             let currentPage = 1;
@@ -113,15 +100,13 @@
                     const data = await response.json();
                     allScripts = allScripts.concat(data.scripts); // Append new scripts to the array
                     maxPages = data.info.maxPages; // Update maxPages from the response
-                    console.log(`Fetched page ${currentPage}:`, data.scripts.length);
                     currentPage++; // Move to the next page
                 } else {
                     console.error("Error fetching scripts:", response.statusText);
                     break; // Exit on error
                 }
             }
-
-            console.log("Total scripts fetched:", allScripts.length);
+            
             displayScripts(); // Display the initial set of scripts after fetching all
         }
 
@@ -138,11 +123,9 @@
                     displayScripts(); // Display initial set of trending scripts
                 } else {
                     console.error("Error:", data.error);
-                    alert('Failed to fetch trending scripts!');
                 }
             } else {
-                alert('Failed to fetch trending scripts!');
-                console.error('Error fetching scripts:', response.statusText);
+                console.error('Failed to fetch trending scripts:', response.statusText);
             }
         }
 
@@ -162,7 +145,6 @@
                     <p>Creator: ${script.user?.username || script.creator}</p>
                     <img src="${script.image}" alt="${script.title}">
                     <textarea id="script-${script._id}" placeholder="Script content will appear here..." readonly></textarea>
-                    <p class="${getStatusClass(script.paymentStatus)}">${getStatusText(script.paymentStatus)}</p> <!-- Payment Status -->
                 `;
 
                 const downloadUrl = script.rawScript;
@@ -176,13 +158,11 @@
                     })
                     .catch((error) => {
                         console.error(`Error fetching script content for ${script.title}:`, error);
-                        const textArea = scriptItem.querySelector(`#script-${script._id}`);
-                        textArea.value = "Error loading content"; // Show error message in textarea
+                        // Skip displaying an error message in the textarea.
                     });
 
                 scriptsContainer.appendChild(scriptItem);
                 currentIndex++;
-                displayedScripts.push(script); // Keep track of displayed scripts
             }
             
             updateShowMoreButton(); // Update Show More button visibility
@@ -193,42 +173,16 @@
             }
         }
 
-        function getStatusClass(status) {
-            switch(status) {
-                case 'paid':
-                    return 'status-paid';
-                case 'free':
-                    return 'status-free';
-                case 'keysystem':
-                    return 'status-keysystem';
-                default:
-                    return '';
-            }
-        }
-
-        function getStatusText(status) {
-            switch(status) {
-                case 'paid':
-                    return 'Paid';
-                case 'free':
-                    return 'Free';
-                case 'keysystem':
-                    return 'Key System';
-                default:
-                    return '';
-            }
-        }
-
         function updateShowMoreButton() {
-            if (currentIndex < allScripts.length) { 
-                document.getElementById('showMoreButton').style.display = 'block'; 
-            } else { 
-                document.getElementById('showMoreButton').style.display = 'none'; 
-                document.getElementById('noMoreMessage').style.display = 'block'; 
-            }
-        }
+          if (currentIndex < allScripts.length) { 
+              document.getElementById('showMoreButton').style.display = 'block'; 
+          } else { 
+              document.getElementById('showMoreButton').style.display = 'none'; 
+              document.getElementById('noMoreMessage').style.display = 'block'; 
+          }
+      }
 
-        function searchScripts() {
+      function searchScripts() {
           const query = document.getElementById('searchBox').value.trim().toLowerCase();
           displayedScripts = allScripts.filter(script => 
               script.title.toLowerCase() === query // Exact match for title
@@ -240,7 +194,6 @@
           scriptsContainer.innerHTML = ''; // Clear previous displayed items
 
           displayScripts(); // Display filtered results after search
-          updateShowMoreButton(); // Update Show More button visibility after search
 
           if (displayedScripts.length === 0) { 
               document.getElementById('noMoreMessage').style.display = 'block'; 
@@ -273,4 +226,4 @@
 
     </script>
 </body>
-    </html>
+</html>
